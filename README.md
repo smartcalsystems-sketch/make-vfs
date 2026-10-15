@@ -114,6 +114,37 @@ export default {
 
 You can now import and use this file!
 
+### Usage with Elysia
+
+`make-vfs` pairs well with [Elysia](https://elysiajs.com/) when building single-file executables with Bun that need to serve embedded static assets or SPAs without relying on runtime filesystem access.
+
+1. Generate your static files virtual bundle:
+
+```sh
+make-vfs --dir ./public --content-format string --outfile static-files-app.ts
+```
+
+2. Serve the virtual files from your Elysia server:
+
+```ts
+import { Elysia } from "elysia"
+import staticFilesApp from "./static-files-app"
+
+const app = new Elysia()
+  .get("/*", ({ path, set }) => {
+    const cleanPath = path.slice(1) || "index.html"
+    const file = staticFilesApp[cleanPath] || staticFilesApp[`public/${cleanPath}`]
+    if (!file) {
+      set.status = 404
+      return "Not Found"
+    }
+    return new Response(file)
+  })
+  .listen(3000)
+
+console.log(`Elysia running at http://${app.server?.hostname}:${app.server?.port}`)
+```
+
 ### Usage as Library
 
 ```ts
